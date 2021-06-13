@@ -3,7 +3,7 @@
 
 - [Lab1 Utilities](https://github.com/zhayujie/xv6-labs-2020/tree/util)
 
-- Lab2 System calls
+- [Lab2 System calls](https://github.com/zhayujie/xv6-labs-2020/tree/syscall)
 
 - Lab3 Page tables
 
