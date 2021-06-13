@@ -1,7 +1,6 @@
 ### Modified files
 
 ```
-modified:   .gitignore
 modified:   Makefile
 modified:   kernel/defs.h
 modified:   kernel/kalloc.c
