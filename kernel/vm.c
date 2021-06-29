@@ -34,7 +34,7 @@ kvminit()
   kvmmap(kernel_pagetable, VIRTIO0, VIRTIO0, PGSIZE, PTE_R | PTE_W);
 
   // CLINT
-  kvmmap(kernel_pagetable, CLINT, CLINT, 0x10000, PTE_R | PTE_W);
+  // kvmmap(kernel_pagetable, CLINT, CLINT, 0x10000, PTE_R | PTE_W);
 
   // PLIC
   kvmmap(kernel_pagetable, PLIC, PLIC, 0x400000, PTE_R | PTE_W);
@@ -310,6 +310,23 @@ free_kernel_pagetable(pagetable_t pagetable, int level) {
   kfree((void*) pagetable);
 }
 
+// free user part in pagetable-pages (below PLIC)
+void
+free_user_pagetable(pagetable_t pagetable) {
+  for (int i = 0; i < 1; i++) {
+    pte_t pte0 = pagetable[i];
+    if ((pte0 & PTE_V) == 0) continue;
+    pagetable_t pgtbl1 = (pagetable_t) PTE2PA(pte0);
+    for (int j = 0; j < 96; j++) {
+      pte_t* pte1 = &pgtbl1[j];
+      if ((*pte1 & PTE_V) == 0) continue;
+      pagetable_t pgtbl2 = (pagetable_t) PTE2PA(*pte1);
+      kfree(pgtbl2);
+      *pte1 = 0;
+    }
+  }
+}
+
 // Free user memory pages,
 // then free page-table pages.
 void
@@ -356,6 +373,21 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
   return -1;
 }
 
+void
+kvmcopy(pagetable_t user_pagetable, pagetable_t kernel_pagetable, uint64 oldsz, uint64 newsz) {
+  uint64 va, pa;
+
+  oldsz = PGROUNDUP(oldsz);
+  if (newsz >= PLIC)      return;
+  for(va = oldsz; va < newsz; va += PGSIZE) {
+    pte_t* pte = walk(user_pagetable, va, 0);
+    if ((*pte & PTE_V) == 0)   continue;
+    pa = PTE2PA(*pte);
+    mappages(kernel_pagetable, va, PGSIZE, pa, PTE_W|PTE_X|PTE_R);
+  }
+}
+
+
 // mark a PTE invalid for user access.
 // used by exec for the user stack guard page.
 void
@@ -400,23 +432,7 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 int
 copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 {
-  uint64 n, va0, pa0;
-
-  while(len > 0){
-    va0 = PGROUNDDOWN(srcva);
-    pa0 = walkaddr(pagetable, va0);
-    if(pa0 == 0)
-      return -1;
-    n = PGSIZE - (srcva - va0);
-    if(n > len)
-      n = len;
-    memmove(dst, (void *)(pa0 + (srcva - va0)), n);
-
-    len -= n;
-    dst += n;
-    srcva = va0 + PGSIZE;
-  }
-  return 0;
+  return copyin_new(pagetable, dst, srcva, len);
 }
 
 // Copy a null-terminated string from user to kernel.
@@ -426,40 +442,7 @@ copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 int
 copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 {
-  uint64 n, va0, pa0;
-  int got_null = 0;
-
-  while(got_null == 0 && max > 0){
-    va0 = PGROUNDDOWN(srcva);
-    pa0 = walkaddr(pagetable, va0);
-    if(pa0 == 0)
-      return -1;
-    n = PGSIZE - (srcva - va0);
-    if(n > max)
-      n = max;
-
-    char *p = (char *) (pa0 + (srcva - va0));
-    while(n > 0){
-      if(*p == '\0'){
-        *dst = '\0';
-        got_null = 1;
-        break;
-      } else {
-        *dst = *p;
-      }
-      --n;
-      --max;
-      p++;
-      dst++;
-    }
-
-    srcva = va0 + PGSIZE;
-  }
-  if(got_null){
-    return 0;
-  } else {
-    return -1;
-  }
+  return copyinstr_new(pagetable, dst, srcva, max);
 }
 
 void vmprintcore(pagetable_t pagetable, int depth);

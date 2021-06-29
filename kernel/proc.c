@@ -31,7 +31,6 @@ procinit(void)
   for(p = proc; p < &proc[NPROC]; p++) {
       initlock(&p->lock, "proc");
   }
-  kvminithart();
 }
 
 // Must be called with interrupts disabled,
@@ -222,6 +221,8 @@ userinit(void)
   // allocate one user page and copy init's instructions
   // and data into it.
   uvminit(p->pagetable, initcode, sizeof(initcode));
+  // sync to kernelpagetable
+  kvmcopy(p->pagetable, p->kernel_pagetable, 0, PGSIZE);
   p->sz = PGSIZE;
 
   // prepare for the very first "return" from kernel to user.
@@ -249,8 +250,12 @@ growproc(int n)
     if((sz = uvmalloc(p->pagetable, sz, sz + n)) == 0) {
       return -1;
     }
+    // sync to kernel pagetable
+    kvmcopy(p->pagetable, p->kernel_pagetable, p->sz, p->sz+n);
   } else if(n < 0){
     sz = uvmdealloc(p->pagetable, sz, sz + n);
+    free_user_pagetable(p->kernel_pagetable);
+    kvmcopy(p->pagetable, p->kernel_pagetable, 0, sz+n);
   }
   p->sz = sz;
   return 0;
@@ -276,6 +281,9 @@ fork(void)
     release(&np->lock);
     return -1;
   }
+  // copy user pagetable to kernerl page
+  kvmcopy(np->pagetable, np->kernel_pagetable, 0, p->sz);
+
   np->sz = p->sz;
 
   np->parent = p;

@@ -1,0 +1,1 @@
+Pagetable: isolate different process’s address spaces and to multiplex them onto a single physical memory.
