@@ -5,7 +5,7 @@
 
 - [Lab2 System calls](https://github.com/zhayujie/xv6-labs-2020/tree/syscall)
 
-- Lab3 Page tables
+- [Lab3 Page tables](https://github.com/zhayujie/xv6-labs-2020/tree/pgtbl)
 
 - Lab4 Traps
 
