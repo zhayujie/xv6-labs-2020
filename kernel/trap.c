@@ -77,9 +77,18 @@ usertrap(void)
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2)
-    yield();
-
+  if(which_dev == 2) {
+    p->ticks += 1;
+    if (p->ticks >= p->period && p->period > 0 && p->inhandler == 0) {
+      p->inhandler = 1;
+      // backup trapframe for interrupted code
+      p->userframe.epc = p->trapframe->epc;
+      memmove((uint64 *) &(p->userframe)+1, (uint64 *) (p->trapframe)+5, 248);
+      p->trapframe->epc = (uint64) p->handler;
+    } else {
+      yield();
+    }
+  }
   usertrapret();
 }
 
@@ -217,4 +226,3 @@ devintr()
     return 0;
   }
 }
-

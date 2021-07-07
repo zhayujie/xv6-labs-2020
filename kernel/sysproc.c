@@ -70,6 +70,7 @@ sys_sleep(void)
     sleep(&ticks, &tickslock);
   }
   release(&tickslock);
+  backtrace();
   return 0;
 }
 
@@ -94,4 +95,33 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64
+sys_sigalarm(void)
+{
+  int period;
+  uint64 func;
+
+  struct proc * p = myproc();
+  if(argint(0, &period) < 0 || argaddr(1, &func) < 0)
+    return -1;
+  p->period = period;
+  p->handler = (void (*)()) func;
+  p->inhandler = 0;
+  return 0;
+}
+
+uint64
+sys_sigreturn(void)
+{
+  struct proc * p = myproc();
+  p->ticks = 0;
+  // restore the interrputed registers
+  p->trapframe->epc = p->userframe.epc;
+  memmove((uint64 *) (p->trapframe) + 5, (uint64 *) &(p->userframe) +1, 248);
+  p->inhandler = 0;
+  yield();
+  usertrapret();
+  return 0;
 }

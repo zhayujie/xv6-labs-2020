@@ -1,0 +1,11 @@
+1.Reigsters from a0 to a7 contain arguments. a2 holds 13 in main's call to printf.
+
+2.Function f and g is not called, because the result is calculated directly by the compiler.
+
+3.The function printf located in address 0x640.
+
+4.The ra register's value is 0x38 which is the next instruction after returnning from printf.
+
+5.The output is 'HE110 World'. 'i' need to be set to 0x726c6400 in big-endian.
+
+6.It will print the value in the a2 register.
