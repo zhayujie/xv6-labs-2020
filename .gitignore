@@ -20,3 +20,4 @@ myapi.key
 *-handin.tar.gz
 xv6.out*
 .DS_Store
+.vscode

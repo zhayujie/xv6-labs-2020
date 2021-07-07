@@ -7,7 +7,7 @@
 
 - [Lab3 Page tables](https://github.com/zhayujie/xv6-labs-2020/tree/pgtbl)
 
-- Lab4 Traps
+- [Lab4 Traps](https://github.com/zhayujie/xv6-labs-2020/tree/traps)
 
 - Lab5 Lazy allocation
 
