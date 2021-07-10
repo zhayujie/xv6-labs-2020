@@ -9,7 +9,7 @@
 
 - [Lab4 Traps](https://github.com/zhayujie/xv6-labs-2020/tree/traps)
 
-- Lab5 Lazy allocation
+- [Lab5 Lazy allocation](https://github.com/zhayujie/xv6-labs-2020/tree/lazy)
 
 - Lab6 Copy on-write
 
