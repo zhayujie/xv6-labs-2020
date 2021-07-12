@@ -15,6 +15,8 @@ extern char etext[];  // kernel.ld sets this to end of kernel code.
 
 extern char trampoline[]; // trampoline.S
 
+extern int refs[];
+
 /*
  * create a direct-map page table for the kernel.
  */
@@ -72,7 +74,7 @@ pte_t *
 walk(pagetable_t pagetable, uint64 va, int alloc)
 {
   if(va >= MAXVA)
-    panic("walk");
+    return 0;
 
   for(int level = 2; level > 0; level--) {
     pte_t *pte = &pagetable[PX(level, va)];
@@ -311,7 +313,6 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
   pte_t *pte;
   uint64 pa, i;
   uint flags;
-  char *mem;
 
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walk(old, i, 0)) == 0)
@@ -319,13 +320,19 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
     if((*pte & PTE_V) == 0)
       panic("uvmcopy: page not present");
     pa = PTE2PA(*pte);
+    // clear PTE_W
+    *pte &= ~PTE_W;
+    // mark as cow page
+    *pte |= PTE_D;
+
     flags = PTE_FLAGS(*pte);
-    if((mem = kalloc()) == 0)
+    if(mappages(new, i, PGSIZE, pa, flags) != 0){
       goto err;
-    memmove(mem, (char*)pa, PGSIZE);
-    if(mappages(new, i, PGSIZE, (uint64)mem, flags) != 0){
-      kfree(mem);
-      goto err;
+    }
+    if (pa >= KERNBASE || pa <= PHYSTOP) {
+      // increase the reference
+      int index = (int) (PGROUNDDOWN(pa) - KERNBASE) / PGSIZE;
+      refs[index]++;
     }
   }
   return 0;
@@ -357,6 +364,9 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
   uint64 n, va0, pa0;
 
   while(len > 0){
+    // copy on write in copyout
+    copy_on_write(pagetable, dstva);
+
     va0 = PGROUNDDOWN(dstva);
     pa0 = walkaddr(pagetable, va0);
     if(pa0 == 0)
@@ -439,4 +449,22 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   } else {
     return -1;
   }
+}
+
+int
+copy_on_write(pagetable_t pagetable, uint64 va) {
+  pte_t * pte = walk(pagetable, va, 0);
+  if ((pte == 0) || (*pte & PTE_U) == 0 || ((*pte & PTE_D) == 0)) {
+    return -1;
+  }
+  uint64 oldpa = PTE2PA(*pte);
+  char * newpa = kalloc();
+  if (newpa == 0) {
+    // no free memory, the process should be killed
+    exit(-1);
+  }
+  *pte = PA2PTE(newpa) | (PTE_W|PTE_R|PTE_X|PTE_U) | PTE_V;
+  memmove(newpa, (char*)oldpa, PGSIZE);
+  kfree((char*) oldpa);
+  return 0;
 }

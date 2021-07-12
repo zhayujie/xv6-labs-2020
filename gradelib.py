@@ -351,7 +351,7 @@ class GDBClient(object):
             self.sock = socket.socket()
             try:
                 self.sock.settimeout(1)
-                self.sock.connect(("localhost", port))
+                self.sock.connect(("127.0.0.1", port))
                 break
             except socket.error:
                 if time.time() >= start + timeout:
