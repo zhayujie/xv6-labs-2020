@@ -11,7 +11,7 @@
 
 - [Lab5 Lazy allocation](https://github.com/zhayujie/xv6-labs-2020/tree/lazy)
 
-- Lab6 Copy on-write
+- [Lab6 Copy-on-write](https://github.com/zhayujie/xv6-labs-2020/tree/cow)
 
 - Lab7 Multithreading
 
