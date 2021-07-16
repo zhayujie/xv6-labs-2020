@@ -13,7 +13,7 @@
 
 - [Lab6 Copy-on-write](https://github.com/zhayujie/xv6-labs-2020/tree/cow)
 
-- Lab7 Multithreading
+- [Lab7 Multithreading](https://github.com/zhayujie/xv6-labs-2020/tree/thread)
 
 - Lab8 Lock
 
