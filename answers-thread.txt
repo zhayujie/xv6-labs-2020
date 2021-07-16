@@ -1,0 +1,6 @@
+Example of two thread sequence:
+  t1: call insert()
+  t2: call insert()
+  t1: *p = e
+  t2: *p = e
+only one entry can be inserted.
