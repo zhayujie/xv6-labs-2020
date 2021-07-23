@@ -15,7 +15,7 @@
 
 - [Lab7 Multithreading](https://github.com/zhayujie/xv6-labs-2020/tree/thread)
 
-- Lab8 Lock
+- [Lab8 Lock](https://github.com/zhayujie/xv6-labs-2020/tree/lock)
 
 - Lab9 File system
 
