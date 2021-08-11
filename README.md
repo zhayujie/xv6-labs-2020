@@ -17,7 +17,7 @@
 
 - [Lab8 Lock](https://github.com/zhayujie/xv6-labs-2020/tree/lock)
 
-- Lab9 File system
+- [Lab9 File system](https://github.com/zhayujie/xv6-labs-2020/tree/fs)
 
 - Lab10 mmap
 
